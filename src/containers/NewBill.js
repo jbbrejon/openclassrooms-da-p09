@@ -22,13 +22,13 @@ export default class NewBill {
     const fileName = filePath[filePath.length - 1]
     // Get file extension
     const fileExtension = fileName.split(".").pop()
-    console.log(fileExtension)
     // Check if file extension is correct
     const isFileExtensionCorrect = ["jpg", "jpeg", "png"].includes(fileExtension.toLowerCase())
-    console.log(isFileExtensionCorrect)
     // Display alert if file extension is not correct
     if (!isFileExtensionCorrect) {
+      // Reset value of file input
       this.document.querySelector(`input[data-testid="file"]`).value = null;
+      // Display alert
       window.alert("Mauvais format de fichier. Formats acceptés : .jpg, .jpeg, .png");
       return;
     }
