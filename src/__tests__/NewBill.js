@@ -46,7 +46,37 @@ describe("Given I am connected as an employee", () => {
 
     describe("When I upload a file", () => {
       // Check file upload control
-      test("Then an alert is raised if an unaccepted image format has been uploaded", async () => {
+
+      test("Then a correct image format (.jpg, .jpeg, .png) has been selected", () => {
+        const onNavigate = (pathname) => {
+          document.body.innerHTML = ROUTES({ pathname });
+        };
+
+        const employeeNewBill = new NewBill({
+          document,
+          onNavigate,
+          store: mockStore,
+          localStorage: window.localStorage,
+        });
+        // Spy on window alerts
+        jest.spyOn(window, "alert").mockImplementation(() => { });
+        // Set input element
+        const fileInput = screen.getByTestId("file");
+        const handleChangeFile = jest.fn(employeeNewBill.handleChangeFile);
+        // Set event listener (file upload)
+        fileInput.addEventListener("change", (e) => handleChangeFile(e));
+        // Set file pattern
+        const file = new File(["img"], "img.jpg", { type: "image/jpg" });
+        // File upload simulation
+        userEvent.upload(fileInput, file);
+        // Check if handleChangeFile has been called
+        expect(handleChangeFile).toHaveBeenCalled();
+        // Check is an window alert has not been called
+        expect(window.alert).not.toHaveBeenCalled();
+        expect(fileInput.files[0]).toStrictEqual(file);
+      });
+
+      test("Then an alert is raised if an incorrect image format has been selected", async () => {
         const onNavigate = (pathname) => {
           document.body.innerHTML = ROUTES({ pathname });
         };
@@ -74,7 +104,6 @@ describe("Given I am connected as an employee", () => {
       });
     });
   })
-
 })
 
 //Integration tests : POST
