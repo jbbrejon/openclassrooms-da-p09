@@ -74,7 +74,7 @@ describe("Given I am connected as an employee", () => {
     });
   })
   describe("When I submit a new bill", () => {
-    test("Then the bill is created", async () => {
+    test("Then a new bill is created", async () => {
       // Set document body
       document.body.innerHTML = NewBillUI();
       const onNavigate = (pathname) => {
@@ -121,12 +121,12 @@ describe("Given I am connected as an employee", () => {
       screen.getByTestId("vat").value = mockedBill.vat;
       screen.getByTestId("pct").value = mockedBill.pct;
       screen.getByTestId("commentary").value = mockedBill.commentary;
-
       newBill.fileName = mockedBill.fileName;
       newBill.fileUrl = mockedBill.fileUrl;
 
       newBill.updateBill = jest.fn();
       const handleSubmit = jest.fn((e) => newBill.handleSubmit(e));
+
       // Set element to monitor
       const form = screen.getByTestId("form-new-bill");
       // Set event listener
@@ -138,7 +138,60 @@ describe("Given I am connected as an employee", () => {
       // Check if updateBill has been called
       expect(newBill.updateBill).toHaveBeenCalled();
     });
+    describe("When an error occurs on API", () => {
+      test("fetches error from an API and fails with 500 error", async () => {
+        jest.spyOn(mockStore, "bills");
+        jest.spyOn(console, "error").mockImplementation(() => { });
 
+        // Set localStorage value
+        Object.defineProperty(window, "localStorage", {
+          value: localStorageMock,
+        });
+        // Set localStorage value
+        Object.defineProperty(window, "location", {
+          value: { hash: ROUTES_PATH["NewBill"] },
+        });
+        // Set localStorage item (key : "type", keyValue : "Employee")
+        window.localStorage.setItem(
+          "user",
+          JSON.stringify({ type: "Employee" })
+        );
+
+        // Set document body content
+        document.body.innerHTML = `<div id="root"></div>`;
+
+        // Initialize router
+        router();
+        const onNavigate = (pathname) => {
+          document.body.innerHTML = ROUTES({ pathname });
+        };
+
+        mockStore.bills.mockImplementationOnce(() => {
+          return {
+            update: () => {
+              return Promise.reject(new Error("Erreur 500"));
+            },
+          };
+        });
+        const newBill = new NewBill({
+          document,
+          onNavigate,
+          store: mockStore,
+          localStorage: window.localStorage,
+        });
+
+        // Set DOM element
+        const form = screen.getByTestId("form-new-bill");
+        const handleSubmit = jest.fn((e) => newBill.handleSubmit(e));
+        // Set event listener
+        form.addEventListener("submit", handleSubmit);
+        // Simulate form submission
+        fireEvent.submit(form);
+        await new Promise(process.nextTick);
+        // Check if console.error has been called
+        expect(console.error).toHaveBeenCalled();
+      });
+    });
 
   });
 })
