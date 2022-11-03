@@ -6,9 +6,10 @@ import userEvent from "@testing-library/user-event";
 import { localStorageMock } from "../__mocks__/localStorage.js";
 import mockStore from "../__mocks__/store";
 import NewBill from "../containers/NewBill.js";
+import NewBillUI from "../views/NewBillUI.js";
 import router from "../app/Router.js";
-import { ROUTES_PATH } from "../constants/routes.js";
-import { screen, waitFor } from "@testing-library/dom";
+import { ROUTES, ROUTES_PATH } from "../constants/routes.js";
+import { fireEvent, screen, waitFor } from "@testing-library/dom";
 
 
 describe("Given I am connected as an employee", () => {
@@ -72,4 +73,72 @@ describe("Given I am connected as an employee", () => {
       });
     });
   })
+  describe("When I submit a new bill", () => {
+    test("Then the bill is created", async () => {
+      // Set document body
+      document.body.innerHTML = NewBillUI();
+      const onNavigate = (pathname) => {
+        document.body.innerHTML = ROUTES({ pathname });
+      };
+      // Set localStorage item (key : "type", keyValue : "Employee", key : "email", keyValue : "a@a")
+      Object.defineProperty(window, "localStorage", {
+        value: localStorageMock,
+      });
+      window.localStorage.setItem(
+        "user",
+        JSON.stringify({
+          type: "Employee",
+          email: "a@a",
+        })
+      );
+
+      const newBill = new NewBill({
+        document,
+        onNavigate,
+        store: null,
+        localStorage: window.localStorage,
+      });
+
+      // Set mock bill object
+      const mockedBill = {
+        type: "IT et électronique",
+        name: "PC",
+        date: "2022-11-03",
+        amount: 348,
+        vat: 70,
+        pct: 20,
+        commentary: "Comment",
+        fileUrl: "https://test.storage.tld/v0/b/billable-677b6.a…f-1.jpg?alt=media&token=4df6ed2c-12c8-42a2-b013-346c1346f732",
+        fileName: "preview-facture-free-201801-pdf-1.jpg",
+        status: "pending",
+      };
+
+      // Set new bill values
+      screen.getByTestId("expense-type").value = mockedBill.type;
+      screen.getByTestId("expense-name").value = mockedBill.name;
+      screen.getByTestId("datepicker").value = mockedBill.date;
+      screen.getByTestId("amount").value = mockedBill.amount;
+      screen.getByTestId("vat").value = mockedBill.vat;
+      screen.getByTestId("pct").value = mockedBill.pct;
+      screen.getByTestId("commentary").value = mockedBill.commentary;
+
+      newBill.fileName = mockedBill.fileName;
+      newBill.fileUrl = mockedBill.fileUrl;
+
+      newBill.updateBill = jest.fn();
+      const handleSubmit = jest.fn((e) => newBill.handleSubmit(e));
+      // Set element to monitor
+      const form = screen.getByTestId("form-new-bill");
+      // Set event listener
+      form.addEventListener("submit", handleSubmit);
+      // Simulate form submission (new bill)
+      fireEvent.submit(form);
+      // Check if handleSubmit has been called
+      expect(handleSubmit).toHaveBeenCalled();
+      // Check if updateBill has been called
+      expect(newBill.updateBill).toHaveBeenCalled();
+    });
+
+
+  });
 })
