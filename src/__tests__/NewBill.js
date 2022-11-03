@@ -11,6 +11,7 @@ import router from "../app/Router.js";
 import { ROUTES, ROUTES_PATH } from "../constants/routes.js";
 import { fireEvent, screen, waitFor } from "@testing-library/dom";
 
+jest.mock("../app/store", () => mockStore);
 
 describe("Given I am connected as an employee", () => {
   describe("When I am on NewBill Page", () => {
@@ -73,6 +74,11 @@ describe("Given I am connected as an employee", () => {
       });
     });
   })
+
+})
+
+//Integration tests : POST
+describe("Given I am a user connected as Employee", () => {
   describe("When I submit a new bill", () => {
     test("Then a new bill is created", async () => {
       // Set document body
@@ -192,6 +198,5 @@ describe("Given I am connected as an employee", () => {
         expect(console.error).toHaveBeenCalled();
       });
     });
-
   });
-})
+});
